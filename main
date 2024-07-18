@@ -1,0 +1,92 @@
+import time
+from colorama import Fore, Style
+import requests
+import sys
+
+def read_from_file(filename, encoding='utf-8'):
+    try:
+        with open(filename, 'r', encoding=encoding) as file:
+            return file.read().strip().splitlines()
+    except FileNotFoundError:
+        print(f"{Fore.RED}Error: {filename} not found.{Style.RESET_ALL}")
+        sys.exit(1)
+    except UnicodeDecodeError:
+        print(f"{Fore.RED}Error: Unable to read {filename} due to encoding issues.{Style.RESET_ALL}")
+        sys.exit(1)
+
+def send_message(token, channel_apis, message_content, delay):
+    headers = {
+        'Authorization': f'{token}',
+        'Content-Type': 'application/json',
+    }
+
+    channel_index = 0
+    num_channels = len(channel_apis)
+
+    while True:
+        channel_api = channel_apis[channel_index]
+        data = {
+            'content': message_content
+        }
+        response = requests.post(channel_api, headers=headers, json=data)
+        if response.status_code == 200:
+            print(f"Message sent successfully to {channel_api}!")
+        else:
+            print(f"Failed to send message to {channel_api}. Status code: {response.status_code}")
+        
+        channel_index = (channel_index + 1) % num_channels
+        time.sleep(delay)
+
+def print_banner():
+    print(f"{Fore.MAGENTA}Loading Scripts")
+    time.sleep(3)
+    print(f"{Fore.MAGENTA}██╗  ██╗ █████╗ ██████╗ ██╗██████╗ ██╗     █████╗ ██████╗ ███████╗")
+    print(f"{Fore.MAGENTA}██║  ██║██╔══██╗██╔══██╗██║██╔══██╗██║    ██╔══██╗██╔══██╗██╔════╝")
+    print(f"{Fore.MAGENTA}███████║███████║██████╔╝██║██████╔╝██║    ███████║██║  ██║███████╗")
+    print(f"{Fore.MAGENTA}██╔══██║██╔══██║██╔══██╗██║██╔══██╗██║    ██╔══██║██║  ██║╚════██║")
+    print(f"{Fore.MAGENTA}██║  ██║██║  ██║██████╔╝██║██████╔╝██║    ██║  ██║██████╔╝███████║")
+    print(f"{Fore.MAGENTA}╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝╚═════╝ ╚═╝    ╚═╝  ╚═╝╚═════╝ ╚══════╝")
+    print(Style.RESET_ALL)  # Reset color
+
+def main():
+    print_banner()
+
+    token = read_from_file("token.txt")[0]
+    channel_apis = read_from_file("apis.txt")
+
+    while True:
+        print("Select an option:")
+        print(f"{Fore.MAGENTA}[1] Advert Bot")
+        print(f"{Fore.MAGENTA}[2] Use Message.txt")
+        print(f"{Fore.MAGENTA}[3] Close Program{Style.RESET_ALL}")
+        option = input("Enter your choice: ")
+
+        if option == '1':
+            print(f"{Fore.MAGENTA}Loading Scripts")
+            time.sleep(3)
+            message_content = input(f"{Fore.MAGENTA}Enter the message content: {Style.RESET_ALL}")
+            delay = int(input(f"{Fore.MAGENTA}Add Delay Between Each Message (in seconds): {Style.RESET_ALL}"))
+            send_message(token, channel_apis, message_content, delay)
+
+        elif option == '2':
+            print(f"{Fore.MAGENTA}Loading Message from message.txt")
+            time.sleep(3)
+            try:
+                with open("message.txt", 'r', encoding='utf-8') as file:
+                    message_content = file.read().strip()
+                delay = int(input(f"{Fore.MAGENTA}Add Delay Between Each Message (in seconds): {Style.RESET_ALL}"))
+                send_message(token, channel_apis, message_content, delay)
+            except FileNotFoundError:
+                print(f"{Fore.RED}Error: message.txt not found.{Style.RESET_ALL}")
+            except UnicodeDecodeError:
+                print(f"{Fore.RED}Error: Unable to read message.txt due to encoding issues.{Style.RESET_ALL}")
+
+        elif option == '3':
+            print("Closing program.")
+            break
+
+        else:
+            print(f"{Fore.RED}Invalid option. Please try again.{Style.RESET_ALL}")
+
+if __name__ == "__main__":
+    main()
